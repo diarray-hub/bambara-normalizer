@@ -10,10 +10,23 @@
 
 ## Installation
 
+### Install from PyPI
+
 To install the package, run:
 
 ```bash
 pip install bambara-normalizer
+```
+
+### Install from Source
+
+To install the package from source, clone the repository and build the package:
+
+```bash
+git clone https://github.com/diarray-hub/bambara-normalizer.git
+cd bambara-normalizer
+python -m build --wheel
+pip install dist/bambara_normalizer-0.0.1-py3-none-any.whl
 ```
 
 ## Usage

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bambara-normalizer"
+version = "0.0.1"
+authors = [
+  { name="Yacouba Diarra", email="diarray@robotsmali.org" },
+]
+description = "A python package for normalizing Bambara text for NLP"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: Bambara",
+    "Topic :: Text Processing :: Linguistic",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+keywords = [
+    "bambara",
+    "text normalization",
+    "NLP",
+    "natural language processing",
+    "diacritic removal",
+    "text preprocessing"
+]
+
+[project.urls]
+Issues = "https://github.com/diarray-hub/bambara-normalizer/issues"
+Source = "https://github.com/diarray-hub/bambara-normalizer"

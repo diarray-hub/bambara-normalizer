@@ -13,7 +13,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import re
-import regex
+try:
+    import regex  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - fallback when regex isn't installed
+    regex = None
 from .basic_bam_normalizer import BasicBambaraNormalizer
 
 class BambaraASRNormalizer(BasicBambaraNormalizer):
@@ -36,7 +39,10 @@ class BambaraASRNormalizer(BasicBambaraNormalizer):
         s = self.clean(s).lower()
 
         if self.split_letters:
-            s = " ".join(regex.findall(r"\X", s, re.U))
+            if regex:
+                s = " ".join(regex.findall(r"\X", s, re.U))
+            else:
+                s = " ".join(list(s))
 
         s = re.sub(
             r"\s+", " ", s

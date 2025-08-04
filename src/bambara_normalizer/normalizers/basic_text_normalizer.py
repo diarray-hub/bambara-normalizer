@@ -14,7 +14,10 @@ limitations under the License.
 """
 import re
 import unicodedata
-import regex
+try:
+    import regex  # type: ignore
+except ModuleNotFoundError:  # pragma: no cover - fallback when regex isn't installed
+    regex = None
 
 # non-ASCII letters that are not separated by "NFKD" normalization
 ADDITIONAL_DIACRITICS = {
@@ -70,7 +73,10 @@ class BasicTextNormalizer:
         s = self.clean(s).lower()
 
         if self.split_letters:
-            s = " ".join(regex.findall(r"\X", s, re.U))
+            if regex:
+                s = " ".join(regex.findall(r"\X", s, re.U))
+            else:
+                s = " ".join(list(s))
 
         s = re.sub(
             r"\s+", " ", s

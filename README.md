@@ -50,7 +50,7 @@ from bambara_normalizer import BasicBambaraNormalizer
 normalizer = BasicBambaraNormalizer()
 text = "à tɔ́gɔ kó : sìrajɛ."
 normalized_text = normalizer(text)
-print(normalized_text)  # Output: "a togoko siraje"
+print(normalized_text)  # Output: "a tɔgɔ ko sirajɛ"
 
 # Example with hyphens
 text_with_hyphens = "- bɛ̀n-kɛ́nɛfisɛ."
@@ -66,12 +66,12 @@ from bambara_normalizer import BambaraASRNormalizer
 normalizer = BambaraASRNormalizer()
 text = "sìrajɛ, - í ni tìle !"
 normalized_text = normalizer(text)
-print(normalized_text)  # Output: "siraje i ni tile"
+print(normalized_text)  # Output: "sirajɛ i ni tile"
 
 # Example with words in parenthesis and brackets
 text_with_brackets = "(à kán) [kɛ̀nɛ]."
 normalized_text = normalizer(text_with_brackets)
-print(normalized_text)  # Output: "a kán kɛ̀nɛ"
+print(normalized_text)  # Output: "a kan kɛnɛ"
 ```
 
 ### BambaraASRNormalizer with Split Letters
@@ -82,7 +82,26 @@ from bambara_normalizer import BambaraASRNormalizer
 normalizer = BambaraASRNormalizer(split_letters=True)
 text = "ǹsé, í ni tìle !"
 normalized_text = normalizer(text)
-print(normalized_text)  # Output: "n s e i ni tile"
+print(normalized_text)  # Output: "n s e i n i t i l e"
+
+### BambaraNumberNormalizer
+
+```python
+from bambara_normalizer import BambaraNumberNormalizer
+
+normalizer = BambaraNumberNormalizer()
+text = "N ye 35.4 tugu."
+normalized_text = normalizer(text)
+print(normalized_text)  # Output: "n ye bi saba ni duuru tomi naani tugu"
+
+# Large numbers and leading zeros
+text2 = "N na 35.000.000 frank. kodoo 012."
+normalized_text2 = normalizer(text2)
+print(normalized_text2)  # Output: "n na milyɔn bi saba ni duuru frank kodoo fu ni kɛlɛn ni fila"
+
+# Denormalization
+print(normalizer.denormalize("bi saba ni duuru tomi naani"))  # Output: "35.4"
+```
 ```
 
 ## Customization

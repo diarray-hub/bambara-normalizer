@@ -13,7 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 import unittest
-from bambara_normalizer.normalizers import BasicTextNormalizer, BasicBambaraNormalizer, BambaraASRNormalizer
+from bambara_normalizer.normalizers import (
+    BasicTextNormalizer,
+    BasicBambaraNormalizer,
+    BambaraASRNormalizer,
+    BambaraNumberNormalizer,
+)
 
 class TestTextNormalizers(unittest.TestCase):
 
@@ -54,6 +59,31 @@ class TestTextNormalizers(unittest.TestCase):
     def test_bambara_asr_normalizer_with_split_letters(self):
         normalizer = BambaraASRNormalizer(split_letters=True)
         self.assertEqual(normalizer("asr test"), "a s r t e s t")
+
+    def test_bambara_asr_readme_examples(self):
+        normalizer = BambaraASRNormalizer()
+        self.assertEqual(normalizer("sìrajɛ, - í ni tìle !"), "sirajɛ i ni tile")
+        self.assertEqual(normalizer("(à kán) [kɛ̀nɛ]."), "a kan kɛnɛ")
+        normalizer_split = BambaraASRNormalizer(split_letters=True)
+        self.assertEqual(normalizer_split("ǹsé, í ni tìle !"), "n s e i n i t i l e")
+
+    def test_bambara_number_normalizer(self):
+        normalizer = BambaraNumberNormalizer()
+        self.assertEqual(
+            normalizer("N ye 35.4 tugu."),
+            "n ye bi saba ni duuru tomi naani tugu",
+        )
+        self.assertEqual(
+            normalizer("N na 35.000.000 frank."),
+            "n na milyɔn bi saba ni duuru frank",
+        )
+        self.assertEqual(normalizer("kodoo 012."), "kodoo fu ni kɛlɛn ni fila")
+        self.assertEqual(
+            normalizer.denormalize("bi saba ni duuru tomi naani"), "35.4"
+        )
+        self.assertEqual(
+            normalizer.denormalize("milyɔn bi saba ni duuru"), "35000000"
+        )
 
 if __name__ == "__main__":
     unittest.main()

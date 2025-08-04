@@ -16,3 +16,11 @@ limitations under the License.
 from .basic_bam_normalizer import BasicBambaraNormalizer
 from .bam_asr_normalizer import BambaraASRNormalizer
 from .basic_text_normalizer import BasicTextNormalizer
+from .bambara_number_normalizer import BambaraNumberNormalizer
+
+__all__ = [
+    "BasicBambaraNormalizer",
+    "BambaraASRNormalizer",
+    "BasicTextNormalizer",
+    "BambaraNumberNormalizer",
+]

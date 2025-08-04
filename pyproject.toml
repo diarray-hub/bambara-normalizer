@@ -4,16 +4,15 @@ build-backend = "hatchling.build"
 
 [project]
 name = "bambara-normalizer"
-version = "0.0.1"
+version = "1.0.0"
 authors = [
   { name="Yacouba Diarra", email="diarray@robotsmali.org" },
 ]
 description = "A python package for normalizing Bambara text for NLP"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

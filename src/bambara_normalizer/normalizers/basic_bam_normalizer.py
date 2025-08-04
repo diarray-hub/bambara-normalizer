@@ -55,7 +55,7 @@ class BasicBambaraNormalizer(BasicTextNormalizer):
         # Only exception is the apostrophe, which is very common in new bambara lexicon
         super().__init__(remove_diacritics, split_letters)
 
-    def remove_symbols(self, s: str, keep="'"):
+    def remove_symbols(self, s: str, keep="'’"):
         """
         Replace any markers, symbols, and punctuations with a space, keeping specified characters.
 
@@ -87,7 +87,7 @@ class BasicBambaraNormalizer(BasicTextNormalizer):
             for i, c in enumerate(normalized)
         )
 
-    def remove_symbols_and_diacritics(self, s: str, keep="'"):
+    def remove_symbols_and_diacritics(self, s: str, keep="'’"):
         """
         Replace any markers, symbols, and punctuations with a space, and remove any diacritics.
 

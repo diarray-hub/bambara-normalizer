@@ -27,7 +27,7 @@ from .basic_bam_normalizer import BasicBambaraNormalizer
 
 UNITS_BAM = [
     "fu",
-    "kɛlɛn",
+    "kelen",
     "fila",
     "saba",
     "naani",
@@ -78,7 +78,7 @@ def bambara_words_to_number(phrase: str) -> int:
     """Convert a Bambara number phrase into an integer."""
     units = {
         "fu": 0,
-        "kɛlɛn": 1,
+        "kelen": 1,
         "fila": 2,
         "saba": 3,
         "naani": 4,
@@ -100,51 +100,43 @@ def bambara_words_to_number(phrase: str) -> int:
         "bi kɔnɔntɔn": 90,
     }
 
-    token_map = {**units, **tens}
+    # Single token values
+    token_map = {**units, **tens, "kɛmɛ": 100}
 
-    phrase = phrase.strip()
-    if not phrase:
-        return 0
-
-    tokens = phrase.split()
-    if "milyɔn" in tokens:
-        idx = tokens.index("milyɔn")
-        before = " ".join(tokens[:idx])
-        after = " ".join(tokens[idx + 1 :])
-        total = bambara_words_to_number(before) if before else 0
-        multiplier = bambara_words_to_number(after) if after else 1
-        return total + 1_000_000 * multiplier
-    if "waa" in tokens:
-        idx = tokens.index("waa")
-        before = " ".join(tokens[:idx])
-        after = " ".join(tokens[idx + 1 :])
-        total = bambara_words_to_number(before) if before else 0
-        multiplier = bambara_words_to_number(after) if after else 1
-        return total + 1000 * multiplier
-    if "kɛmɛ" in tokens:
-        idx = tokens.index("kɛmɛ")
-        before = " ".join(tokens[:idx])
-        after = " ".join(tokens[idx + 1 :])
-        total = bambara_words_to_number(before) if before else 0
-        multiplier = bambara_words_to_number(after) if after else 1
-        return total + 100 * multiplier
-
-    parts = [p.strip() for p in re.split(r"\bni\b", phrase) if p.strip()]
+    parts = [p.strip() for p in phrase.strip().split("ni") if p.strip()]
     total = 0
+
     for part in parts:
-        if part in token_map:
-            total += token_map[part]
+        tokens = part.split()
+        if not tokens:
+            continue
+
+        if tokens[0] == "waa":  # e.g. "waa duuru"
+            multiplier = bambara_words_to_number(" ".join(tokens[1:])) if len(tokens) > 1 else 1
+            total += 1000 * multiplier
+
+        elif tokens[0] == "milyɔn":
+            multiplier = bambara_words_to_number(" ".join(tokens[1:])) if len(tokens) > 1 else 1
+            total += 1_000_000 * multiplier
+
+        elif tokens[0] == "kɛmɛ":
+            multiplier = bambara_words_to_number(" ".join(tokens[1:])) if len(tokens) > 1 else 1
+            total += 100 * multiplier
+
         else:
-            raise ValueError(
-                f"Unrecognized token: {part}. Check for a syntax error"
-            )
+            token = " ".join(tokens)
+            if token in token_map:
+                total += token_map[token]
+            else:
+                raise ValueError(f"Unrecognized token: {token}. Check for a syntax error")
+
     return total
 
 
 # tokens that may appear in number phrases
 NUMBER_WORD_TOKENS = {
     "fu",
-    "kɛlɛn",
+    "kelen",
     "fila",
     "saba",
     "naani",
@@ -166,7 +158,7 @@ NUMBER_WORD_TOKENS = {
 
 
 class BambaraNumberNormalizer(BasicBambaraNormalizer):
-    """Normalize and denormalize numbers within Bambara text."""
+    """Normalize and denormalize numbers within Bambara text. Support up to millions"""
 
     def _normalize_number_token(self, token: str) -> str:
         if token.count(".") == 1:
@@ -224,6 +216,14 @@ class BambaraNumberNormalizer(BasicBambaraNormalizer):
             return phrase
 
     def denormalize(self, s: str) -> str:
+        """Denormalize a Bambara number phrase and return its numeral form.
+
+        Args:
+            s (str): The spelled out number in proper Bambara syntax
+
+        Returns:
+            str: The numeral form of the number phrase.
+        """
         tokens = s.lower().split()
         result = []
         buf = []
@@ -241,4 +241,3 @@ class BambaraNumberNormalizer(BasicBambaraNormalizer):
 
 
 __all__ = ["BambaraNumberNormalizer"]
-

@@ -142,7 +142,7 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 - [Yacouba Diarra @ RobotsMali AI4D Lab](https://github.com/diarray-hub)
 
-***⚠️ Warning**: This package is not actively maintained
+***⚠️ Warning***: This package is not actively maintained
 
 ---
 

@@ -1,3 +1,17 @@
+# Bambara Normalizer v1.1.0
+
+First update of the package. August 04, 2025
+
+## Features
+
+- **BambaraNumberNormalizer**: Add number dɔrɔmɛ counting support to the number normalizer class
+
+## Fixes
+
+- **omitted units**: BambaraNumberNormilzer used to omit units after ten (eg. 14, 15, 17)
+- **Drop Support for radio frequencies**: The BambaraNumberNormilzer no longer makes a special exception for numbers that look like radio frequencies (eg. 39.1; 97.9). By removing this feature we uniformize and simplify the Number normalizer to its base integer normalization and fix errors with unexpected float normalization
+- **Fixed typos and better documentation**
+
 # Bambara Normalizer v1.0.0
 
 First update of the package. August 04, 2025
@@ -23,10 +37,10 @@ First pre-release. January 17, 2025
 - **BasicBambaraNormalizer**: Extends `BasicTextNormalizer` with specific rules for Bambara text, such as preserving hyphens in compound words and handling apostrophes.
 - **BambaraASRNormalizer**: A specialized normalizer for Automatic Speech Recognition (ASR) tasks in Bambara, designed to retain parenthetical and bracketed text that might appear in spoken transcriptions.
 
-## Install from PyPI
+# Install from PyPI
 
 To install the package, run:
 
 ```bash
-pip install bambara-normalizer==0.0.1
+pip install bambara-normalizer
 ```

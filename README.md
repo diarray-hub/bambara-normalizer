@@ -7,7 +7,7 @@
 - **BasicTextNormalizer**: A generic text normalization class that removes symbols, diacritics, and optionally splits letters.
 - **BasicBambaraNormalizer**: Extends `BasicTextNormalizer` with specific rules for Bambara text, such as preserving hyphens in compound words and handling apostrophes.
 - **BambaraASRNormalizer**: A specialized normalizer for Automatic Speech Recognition (ASR) tasks in Bambara, designed to retain parenthetical and bracketed text that might appear in spoken transcriptions.
-- **BambaraNumberNormalizer**: Add number normalization capability to the package, both number2bam and bam2number (up to millions)
+- **BambaraNumberNormalizer**: Add number normalization capability to the package, both number2bam and bam2number including money amounts (Bambara 'dɔrɔmɛ' counting system where 5 CFA equals 1 dɔrɔmɛ) (up to millions)
 
 ## Installation
 
@@ -27,7 +27,7 @@ To install the package from source, clone the repository and build the package:
 git clone https://github.com/diarray-hub/bambara-normalizer.git
 cd bambara-normalizer
 python -m build --wheel
-pip install dist/bambara_normalizer-1.0.0-py3-none-any.whl
+pip install dist/bambara_normalizer-1.1.0-py3-none-any.whl
 ```
 
 ## Usage
@@ -75,15 +75,6 @@ normalized_text = normalizer(text_with_brackets)
 print(normalized_text)  # Output: "a ka kɛnɛ"
 ```
 
-### Words to number
-
-```python
->>> from bambara_normalizer import BambaraNumberNormalizer
->>> normalizer = BambaraNumberNormalizer()
->>> normalizer.denormalize("waa bi saba ni waa kelen")
-'31000'
-```
-
 ### BambaraASRNormalizer with Split Letters
 
 ```python
@@ -95,24 +86,46 @@ normalized_text = normalizer(text)
 print(normalized_text)  # Output: "n s e i n i t i l e"
 ```
 
-### BambaraNumberNormalizer
+### Words to number
+
+```python
+>>> from bambara_normalizer import BambaraNumberNormalizer
+>>> normalizer = BambaraNumberNormalizer()
+>>> normalizer.denormalize("waa kɛmɛ ni bi duuru ni seegin")
+'158000'
+>>> normalizer.denormalize("waa bi saba ni kelen ani kɛmɛ wɔɔrɔ", is_money=True)
+'158000'
+```
+
+### Number to Bambara
+```python
+>>> from bambara_normalizer import BambaraNumberNormalizer
+>>> normalizer = BambaraNumberNormalizer()
+>>> normalizer("158000")
+'waa kɛmɛ ni bi duuru ni seegin'
+>>> normalizer("158000", is_money=True)
+'waa bi saba ni kelen ani kɛmɛ wɔɔrɔ'
+# the token "ani" is used as a magnitude separator that separates the high magnitude units (milyɔn|waa|kɛmɛ)
+# the token "ni" is used for summing into internal magnitude units
+# Note that the denormalize function expects those tokens to hold those specific meanings
+>>> num_norm("147.874.120", is_money=True)
+'milyɔn kɛmɛ ni bi naani ni wolonwula ani waa kɛmɛ ni bi wolonwula ni naani ani kɛmɛ seegin ni mugan ni naani'
+```
+
+### BambaraNumberNormalizer (used on full sentences)
 
 ```python
 from bambara_normalizer import BambaraNumberNormalizer
 
 normalizer = BambaraNumberNormalizer()
-text = "N ye 35.000 tugu."
-normalized_text = normalizer(text)
-print(normalized_text)  # Output: "n ye waa bi saba ni duuru tugu"
+text = "N ye 35000 tugu."
+normalized_text = normalizer(text, is_money=True)
+print(normalized_text)  # Output: "n ye waa wolunwula tugu"
 
 # Large numbers and leading zeros
 text2 = "N bɛ na 35.000.000 labɔ. Kɔdi ye 012."
 normalized_text2 = normalizer(text2)
-print(normalized_text2)  # Output: "n bɛ na milyɔn bi saba ni duuru labɔ kɔdi ye fu ni kelen ni fila"
-
-text3 = " N bɛ arajo lamɛ na, a bɛ 89.1 de kan"
-normalized_text3 = normalizer(text3)
-print(normalized_text3)  # Output: "n bɛ arajo lamɛ na a bɛ bi kɔnɔntɔn ni kɔnɔntɔn tomi kelen de kan"
+print(normalized_text2)  # Output: "n bɛ na milyɔn bi saba ni duuru labɔ. kɔdi ye fu ni kelen ni fila"
 
 # Denormalization
 print(normalizer.denormalize("milyɔn bi saba ni duuru"))  # Output: "35000000"

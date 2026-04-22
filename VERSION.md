@@ -1,7 +1,5 @@
 # Bambara Normalizer v1.1.0
 
-First update of the package. August 04, 2025
-
 ## Features
 
 - **BambaraNumberNormalizer**: Add number dɔrɔmɛ counting support to the number normalizer class

@@ -14,6 +14,7 @@ limitations under the License.
 """
 
 import re
+
 try:
     import regex  # type: ignore
 except ModuleNotFoundError:  # pragma: no cover - fallback when regex isn't installed
@@ -39,9 +40,9 @@ UNITS_BAM = [
 ]
 
 
-def number_to_bambara(n: int) -> str:
+def number_to_bambara(n: int, is_money: bool = False) -> str:
     """Recursive Bambara number to words (supports up to millions)."""
-    units = UNITS_BAM
+    units = UNITS_BAM 
     tens = [
         "",
         "tan",
@@ -50,88 +51,122 @@ def number_to_bambara(n: int) -> str:
         "bi naani",
         "bi duuru",
         "bi wɔɔrɔ",
-        "bi wolonfila",
+        "bi wolonwula",
         "bi seegin",
         "bi kɔnɔntɔn",
     ]
-    if n == 0:
-        return "fu"
-    if n < 10:
-        return units[n]
-    if n < 100:
-        if n < 20:
-            return tens[n // 10]
-        return tens[n // 10] + (" ni " + number_to_bambara(n % 10) if n % 10 else "")
-    if n < 1000:
-        prefix = "kɛmɛ" if n < 200 else "kɛmɛ " + number_to_bambara(n // 100)
-        return prefix + (" ni " + number_to_bambara(n % 100) if n % 100 else "")
-    if n < 1_000_000:
-        return "waa " + number_to_bambara(n // 1000) + (
-            " ni " + number_to_bambara(n % 1000) if n % 1000 else ""
+    
+    if is_money:
+        if n < 1_000_000:
+            n //= 5  # Convert from CFA counting to actual number
+            
+        if n == 0:
+            return "fu"
+        if n < 10:
+            return "dɔrɔmɛ " + units[n]
+        if n < 100:
+            # INSIDE magnitude (Tens & Units): use "ni"
+            return tens[n // 10] + (" ni " + number_to_bambara(n % 10) if n % 10 else "")
+        if n < 1000:
+            # CROSSING magnitude (Hundreds to remainder): use "ani"
+            prefix = "kɛmɛ" if n < 200 else "kɛmɛ " + number_to_bambara(n // 100)
+            return prefix + (" ni " + number_to_bambara(n % 100) if n % 100 else "")
+        if n < 1_000_000:
+            return "waa " + number_to_bambara(n // 1000) + (
+                " ani " + number_to_bambara(n % 1000) if n % 1000 else ""
+            )
+        return "milyɔn " + number_to_bambara(n // 1_000_000) + (
+            " ani " + number_to_bambara(n % 1_000_000, is_money=True) if n % 1_000_000 else ""
         )
-    return "milyɔn " + number_to_bambara(n // 1_000_000) + (
-        " ni " + number_to_bambara(n % 1_000_000) if n % 1_000_000 else ""
-    )
+    else:
+        if n == 0:
+            return "fu"
+        if n < 10:
+            return units[n]
+        if n < 100:
+            return tens[n // 10] + (" ni " + number_to_bambara(n % 10) if n % 10 else "")
+        if n < 1000:
+            prefix = "kɛmɛ" if n < 200 else "kɛmɛ " + number_to_bambara(n // 100)
+            return prefix + (" ni " + number_to_bambara(n % 100) if n % 100 else "")
+        if n < 1_000_000:
+            return "waa " + number_to_bambara(n // 1000) + (
+                " ani " + number_to_bambara(n % 1000) if n % 1000 else ""
+            )
+        return "milyɔn " + number_to_bambara(n // 1_000_000) + (
+            " ani " + number_to_bambara(n % 1_000_000) if n % 1_000_000 else ""
+        )
 
-
-def bambara_words_to_number(phrase: str) -> int:
+def bambara_words_to_number(phrase: str, is_money: bool = False) -> int:
     """Convert a Bambara number phrase into an integer."""
+    # Clean up the money prefix immediately as it has no numeric counting value 
+    # (The CFA scaling is handled at the end)
+    phrase = phrase.replace("dɔrɔmɛ ", "").strip()
+    
+    if not phrase or phrase == "fu":
+        return 0
+
+    # We both 'wolonwula' and 'wolonfila' to make it robust to dialect variations
     units = {
-        "fu": 0,
-        "kelen": 1,
-        "fila": 2,
-        "saba": 3,
-        "naani": 4,
-        "duuru": 5,
-        "wɔɔrɔ": 6,
-        "wolonwula": 7,
-        "seegin": 8,
-        "kɔnɔntɔn": 9,
+        "kelen": 1, "fila": 2, "saba": 3, "naani": 4, "duuru": 5,
+        "wɔɔrɔ": 6, "wolonwula": 7, "wolonfila": 7, "seegin": 8, "kɔnɔntɔn": 9,
     }
     tens = {
-        "tan": 10,
-        "mugan": 20,
-        "bi saba": 30,
-        "bi naani": 40,
-        "bi duuru": 50,
-        "bi wɔɔrɔ": 60,
-        "bi wolonfila": 70,
-        "bi seegin": 80,
-        "bi kɔnɔntɔn": 90,
+        "tan": 10, "mugan": 20, "bi saba": 30, "bi naani": 40,
+        "bi duuru": 50, "bi wɔɔrɔ": 60, "bi wolonwula": 70, "bi wolonfila": 70,
+        "bi seegin": 80, "bi kɔnɔntɔn": 90,
     }
+    
+    token_map = {**units, **tens}
 
-    # Single token values
-    token_map = {**units, **tens, "kɛmɛ": 100}
+    def parse_block(block: str) -> int:
+        """Recursively evaluate a chunk of text without 'ani' separators."""
+        block = block.strip()
+        if not block:
+            return 0
 
-    parts = [p.strip() for p in phrase.strip().split("ni") if p.strip()]
-    total = 0
+        # 1. Evaluate Millions multiplier
+        if block.startswith("milyɔn"):
+            remainder = block.replace("milyɔn", "", 1).strip()
+            multiplier = parse_block(remainder) if remainder else 1
+            return 1_000_000 * multiplier
 
-    for part in parts:
-        tokens = part.split()
-        if not tokens:
-            continue
+        # 2. Evaluate Thousands multiplier
+        if block.startswith("waa"):
+            remainder = block.replace("waa", "", 1).strip()
+            multiplier = parse_block(remainder) if remainder else 1
+            return 1000 * multiplier
 
-        if tokens[0] == "waa":  # e.g. "waa duuru"
-            multiplier = bambara_words_to_number(" ".join(tokens[1:])) if len(tokens) > 1 else 1
-            total += 1000 * multiplier
-
-        elif tokens[0] == "milyɔn":
-            multiplier = bambara_words_to_number(" ".join(tokens[1:])) if len(tokens) > 1 else 1
-            total += 1_000_000 * multiplier
-
-        elif tokens[0] == "kɛmɛ":
-            multiplier = bambara_words_to_number(" ".join(tokens[1:])) if len(tokens) > 1 else 1
-            total += 100 * multiplier
-
-        else:
-            token = " ".join(tokens)
-            if token in token_map:
-                total += token_map[token]
+        # 3. Evaluate Hundreds, Tens, Units
+        parts = [p.strip() for p in block.split(" ni ") if p.strip()]
+        block_total = 0
+        
+        for part in parts:
+            if not part:
+                continue
+            if part.startswith("kɛmɛ"):
+                # E.g., "kɛmɛ naani" -> extract "naani", calculate 100 * 4
+                mult_str = part.replace("kɛmɛ", "", 1).strip()
+                mult = token_map.get(mult_str, 1) if mult_str else 1
+                block_total += 100 * mult
+            elif part in token_map:
+                block_total += token_map[part]
             else:
-                raise ValueError(f"Unrecognized token: {token}. Check for a syntax error")
+                raise ValueError(f"Unrecognized token: '{part}'. Check for a syntax error.")
+                
+        return block_total
+
+    major_blocks = phrase.split(" ani ")
+    
+    # We just parse each block and sum them all together
+    total = sum(parse_block(block) for block in major_blocks)
+
+    if is_money:
+        if total >= 1_000_000:
+            total = (total // 1_000_000) * 1_000_000 + (total % 1_000_000) * 5
+        else:
+            total = total * 5
 
     return total
-
 
 # tokens that may appear in number phrases
 NUMBER_WORD_TOKENS = {
@@ -152,42 +187,30 @@ NUMBER_WORD_TOKENS = {
     "kɛmɛ",
     "waa",
     "milyɔn",
-    "tomi",
     "ni",
-}
+    "ani"}
 
 
 class BambaraNumberNormalizer(BasicBambaraNormalizer):
     """Normalize and denormalize numbers within Bambara text. Support up to millions"""
 
-    def _normalize_number_token(self, token: str) -> str:
-        if token.count(".") == 1:
-            left, right = token.split(".")
-            if len(right) == 1:
-                return (
-                    f"{number_to_bambara(int(left))} tomi {number_to_bambara(int(right))}"
-                )
-
+    def _normalize_number_token(self, token: str, is_money: bool = False) -> str:
         if "." in token:
             parts = token.split(".")
-            if all(len(p) == 3 for p in parts[1:]):
-                token = "".join(parts)
-            else:
-                token = parts[0] + "".join(parts[1:])
+            token = "".join(parts)
 
         if token.startswith("0") and len(token) > 1:
             digits = [int(d) for d in token]
             return " ni ".join(UNITS_BAM[d] for d in digits)
 
         n = int(token)
-        return number_to_bambara(n)
+        return number_to_bambara(n, is_money=is_money)
 
-    def __call__(self, s: str):
+    def __call__(self, s: str, is_money: bool = False) -> str:
         s = s.lower()
         s = re.sub(r"[<\[][^>\]]*[>\]]", "", s)
         s = re.sub(r"\(([^)]+?)\)", "", s)
-        s = re.sub(r"\d[\d\.]*", lambda m: self._normalize_number_token(m.group(0)), s)
-        s = self.clean(s).lower()
+        s = re.sub(r"\d[\d\.]*", lambda m: self._normalize_number_token(m.group(0), is_money=is_money), s)
 
         if self.split_letters:
             if regex:
@@ -198,28 +221,19 @@ class BambaraNumberNormalizer(BasicBambaraNormalizer):
         s = re.sub(r"\s+", " ", s)
         return s.strip()
 
-    def _denormalize_buffer(self, tokens):
+    def _denormalize_buffer(self, tokens, is_money: bool = False) -> str:
         phrase = " ".join(tokens)
-        if "tomi" in tokens:
-            idx = tokens.index("tomi")
-            left_phrase = " ".join(tokens[:idx])
-            right_phrase = " ".join(tokens[idx + 1 :])
-            try:
-                left = bambara_words_to_number(left_phrase) if left_phrase else 0
-                right = bambara_words_to_number(right_phrase) if right_phrase else 0
-                return f"{left}.{right}"
-            except ValueError:
-                return phrase
         try:
-            return str(bambara_words_to_number(phrase))
+            return str(bambara_words_to_number(phrase, is_money=is_money))
         except ValueError:
             return phrase
 
-    def denormalize(self, s: str) -> str:
+    def denormalize(self, s: str, is_money: bool = False) -> str:
         """Denormalize a Bambara number phrase and return its numeral form.
 
         Args:
             s (str): The spelled out number in proper Bambara syntax
+            is_money (bool): Whether the number represents a money amount
 
         Returns:
             str: The numeral form of the number phrase.
@@ -232,11 +246,11 @@ class BambaraNumberNormalizer(BasicBambaraNormalizer):
                 buf.append(t)
             else:
                 if buf:
-                    result.append(self._denormalize_buffer(buf))
+                    result.append(self._denormalize_buffer(buf, is_money=is_money))
                     buf = []
                 result.append(t)
         if buf:
-            result.append(self._denormalize_buffer(buf))
+            result.append(self._denormalize_buffer(buf, is_money=is_money))
         return " ".join(result)
 
 
